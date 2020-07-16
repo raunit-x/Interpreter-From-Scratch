@@ -19,6 +19,18 @@ class IllegalCharError(Error):
     def __init__(self, details):
         super().__init__('Illegal Character', details)
 
+
+####################################
+# POSITION
+####################################
+class Position:
+    def __init__(self, line, column):
+        self.line = line
+        self.column = column
+
+    def __repr__(self):
+        return f'{self.line}:{self.column}'
+        
         
 
 ####################################
