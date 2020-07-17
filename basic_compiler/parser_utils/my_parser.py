@@ -50,7 +50,7 @@ class Parser:
         return res 
 
     ################################
-    # implmentation of grammar rules
+    # implmentation of grammar rulesf
     ################################
 
     def factor(self):
