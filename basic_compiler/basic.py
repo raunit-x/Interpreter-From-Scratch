@@ -2,7 +2,7 @@ from basic_compiler.errors import Error, IllegalCharError
 from basic_compiler.position import Position
 from basic_compiler.lexer import Lexer
 from basic_compiler.parser_utils.my_parser import Parser
-from basic_compiler.interpreter import Interpreter
+from basic_compiler.interpreter import Interpreter, Context
 
 #######################
 # RUN
@@ -23,6 +23,7 @@ def run(fn, text):
     print(f'AST Tree: {ast.node}')
     # Run Program
     interpreter = Interpreter()
-    result = interpreter.visit(ast.node)
+    context = Context(fn)
+    result = interpreter.visit(ast.node, context)
 
     return result.value, result.error

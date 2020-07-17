@@ -34,25 +34,33 @@ class RTResult:
 # Context
 ########################
 
+class Context:
+    def __init__(self, display_name, parent=None, parent_entry_pos=None):
+        self.display_name = display_name
+        self.parent = parent
+        self.parent_entry_pos = parent_entry_pos
+    
 
 class Interpreter:
-    def visit(self, node) -> Number:
+    def visit(self, node, context) -> Number:
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
-        return method(node)
+        return method(node, context)
     
-    def no_visit_method(self, node) -> Number:
+    def no_visit_method(self, node, context) -> Number:
         raise Exception(f'No visit_{type(node).__name__} method defined')
     
-    def visit_NumberNode(self, node: NumberNode) -> Number:
-        return RTResult().success(Number(node.token.value).set_position(node.pos_start, node.pos_start)) 
+    def visit_NumberNode(self, node: NumberNode, context) -> Number:
+        return RTResult().success(
+            Number(node.token.value).set_context(context).set_position(node.pos_start, node.pos_start)
+        ) 
 
-    def visit_BinaryOperationNode(self, node: BinaryOperationNode) -> Number:
+    def visit_BinaryOperationNode(self, node: BinaryOperationNode, context) -> Number:
         res = RTResult()
-        left = res.register(self.visit(node.left))
+        left = res.register(self.visit(node.left, context))
         if res.error:
             return res
-        right = res.register(self.visit(node.right))
+        right = res.register(self.visit(node.right, context))
         if res.error:
             return res
         if node.operator_token.type == token_types['+']:
@@ -68,9 +76,9 @@ class Interpreter:
         return res.success(result.set_position(node.pos_start, node.pos_end))
 
     
-    def visit_UnaryOperationNode(self, node) -> Number: 
-        res = RTResult()
-        num = res.register(self.visit(node.node))
+    def visit_UnaryOperationNode(self, node, context) -> Number: 
+        res = RTResult()        
+        num = res.register(self.visit(node.node, context))
         if res.error:
             return res
         error = None

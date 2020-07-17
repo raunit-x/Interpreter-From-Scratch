@@ -3,6 +3,7 @@ class Number:
     def __init__(self, value):
         self.value = value
         self.set_position()
+        self.set_context()
     
     def __repr__(self):
         return f'{self.value}'
@@ -14,20 +15,23 @@ class Number:
 
     def added_to(self, other):
         if isinstance(other, Number):
-            return Number(other.value + self.value), None
+            return Number(other.value + self.value).set_context(self.context), None
     
     def subtracted_by(self, other):
         if isinstance(other, Number):
-            return Number(self.value - other.value), None
+            return Number(self.value - other.value).set_context(self.context), None
         
     def multiplied_by(self, other):
         if isinstance(other, Number):
-            return Number(self.value * other.value), None
+            return Number(self.value * other.value).set_context(self.context), None
     
     def divided_by(self, other):
         if isinstance(other, Number):
             if other.value:
-                return Number(self.value / other.value), None
+                return Number(self.value / other.value).set_context(self.context), None
             else: 
-                return Number(None), RunTimeError(other.pos_start, other.pos_end, 'Division by Zero')
+                return None, RunTimeError(other.pos_start, other.pos_end, 'Division by Zero', self.context)
     
+    def set_context(self, context=None):
+        self.context = context
+        return self
