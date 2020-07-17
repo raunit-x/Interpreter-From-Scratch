@@ -1,4 +1,4 @@
-import basic
+import basic_compiler.basic as basic
 while True:
     text = input('basic > ')
     result, error = basic.run('<stdin>', text)
