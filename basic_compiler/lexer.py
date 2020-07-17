@@ -31,8 +31,8 @@ class Lexer:
                 num_str += self.current_char
             self.advance()
         if not period_count:
-            return Token(token_types['TT_INT'], int(num_str))
-        return Token(token_types['TT_FLOAT'], float(num_str))
+            return Token(token_types['int'], int(num_str))
+        return Token(token_types['float'], float(num_str))
 
 
     def make_tokens(self):
@@ -41,7 +41,7 @@ class Lexer:
             if self.current_char in [' ', '\t', '\n']:
                 self.advance()
             elif self.current_char in token_types:
-                tokens.append(list(token_types[self.current_char].values())[0])
+                tokens.append(Token(token_types[self.current_char]))
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
