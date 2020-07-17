@@ -55,12 +55,28 @@ class Parser:
 
     def factor(self):
         res = ParseResult()
-
         tok = self.current_token
-
-        if tok.type in (token_types['int'], token_types['float']):
+        if tok.type in (token_types['+'], token_types['-']):
+            res.register(self.advance())
+            factor = res.register(self.factor())
+            if res.error:
+                return res
+            return res.success(nodes.UnaryOperationNode(tok, factor))
+        elif tok.type in (token_types['int'], token_types['float']):
             res.register(self.advance())
             return res.success(nodes.NumberNode(tok))
+        elif tok.type == token_types['(']:
+            res.register(self.advance())
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            if self.current_token.type == token_types[')']:
+                res.register(self.advance())
+                if res.error:
+                    return res
+                return res.success(expr) 
+            else:
+                res.failure(InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
         return res.failure(InvalidSynatxError(tok.pos_start, tok.pos_end, 'Expected int or float'))
 
     def bin_op(self, func, token_match):
