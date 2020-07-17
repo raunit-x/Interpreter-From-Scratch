@@ -11,7 +11,8 @@ token_types = {
     '-': 'MINUS',
     '/': 'DIV',
     '(': 'LPAREN',
-    ')': 'RPAREN'
+    ')': 'RPAREN',
+    'EOF': 'EOF'
 }
 
 class Token:

@@ -21,6 +21,7 @@ class Lexer:
     def make_number(self):
         period_count = 0
         num_str = ''
+        pos_start = self.pos.copy()
         while self.current_char and self.current_char in DIGITS + '.':                    
             if self.current_char == '.':
                 if period_count:
@@ -31,8 +32,8 @@ class Lexer:
                 num_str += self.current_char
             self.advance()
         if not period_count:
-            return Token(token_types['int'], int(num_str))
-        return Token(token_types['float'], float(num_str))
+            return Token(token_types['int'], int(num_str), pos_start, self.pos)
+        return Token(token_types['float'], float(num_str), pos_start, self.pos)
 
 
     def make_tokens(self):
@@ -41,7 +42,7 @@ class Lexer:
             if self.current_char in [' ', '\t', '\n']:
                 self.advance()
             elif self.current_char in token_types:
-                tokens.append(Token(token_types[self.current_char]))
+                tokens.append(Token(type=token_types[self.current_char], pos_start=self.pos))
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
@@ -50,4 +51,5 @@ class Lexer:
                 char = self.current_char
                 self.advance()
                 return [], IllegalCharError(pos_start, self.pos, f"'{char}'")
+        tokens.append(Token(token_types['EOF'], pos_start=self.pos))
         return tokens, None

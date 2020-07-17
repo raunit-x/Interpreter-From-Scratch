@@ -16,5 +16,5 @@ def run(fn, text):
         return None, error
     # Generate AST
     parser = Parser(tokens)
-    ast = parser.parse()
-    return ast, error
+    ast = parser.parse()    
+    return ast.node, ast.error
