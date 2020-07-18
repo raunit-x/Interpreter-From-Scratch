@@ -114,7 +114,7 @@ class Interpreter:
             return res.failure(error) 
         return res.success(num.set_position(node.pos_start, node.pos_end))
     
-    def visi_VarAccessNode(self, node, context):
+    def visit_VarAccessNode(self, node, context):
         res = RTResult()
         var_name = node.var_name_token.value
         value = context.symbol_table.get(var_name)
@@ -127,7 +127,7 @@ class Interpreter:
             ))
         return res.success(value)
     
-    def visi_VarAssignNode(self, node, context):
+    def visit_VarAssignNode(self, node, context):
         res = RTResult()
         var_name = node.var_name_token.value
         value = res.register(self.visit(node.value_node, context))
