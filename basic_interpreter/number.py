@@ -80,6 +80,5 @@ class Number:
         if isinstance(other, Number):
             return Number(int(self.value or other.value)).set_context(self.context), None
     
-    def notted(self, other):
-        if isinstance(other, Number):
-            return Number(int(1 if not self.value else 0)).set_context(self.context), None
+    def notted(self):
+        return Number(int(1 if not self.value else 0)).set_context(self.context), None
