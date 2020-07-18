@@ -1,7 +1,7 @@
 from basic_compiler.position import Position
 from basic_compiler.tokens import Token, token_types
 from basic_compiler.errors import IllegalCharError
-from basic_compiler.constants import DIGITS
+from basic_compiler.constants import DIGITS, LETTERS, LETTERS_DIGITS, KEYWORDS
 ####################################
 # LEXER
 ####################################
@@ -34,7 +34,15 @@ class Lexer:
         if not period_count:
             return Token(token_types['int'], int(num_str), pos_start, self.pos)
         return Token(token_types['float'], float(num_str), pos_start, self.pos)
-
+    
+    def make_identifier(self):
+        id_str = ''
+        pos_start = self.pos.copy()
+        while self.current_char  and self.current_char in LETTERS_DIGITS + '_':
+            id_str += self.current_char
+            self.advance()
+        tok_type = token_types['keyword'] if id_str in KEYWORDS else token_types['identifier']
+        return Token(tok_type, id_str, pos_start, self.pos.copy())
 
     def make_tokens(self):
         tokens = []
@@ -46,6 +54,8 @@ class Lexer:
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
+            elif self.current_char in LETTERS:
+                tokens.append(self.make_identifier())
             else:
                 pos_start = self.pos.copy()
                 char = self.current_char

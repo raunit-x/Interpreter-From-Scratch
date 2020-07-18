@@ -1,6 +1,7 @@
 from basic_compiler.number import Number
 from basic_compiler.parser_utils.nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
 from basic_compiler.tokens import token_types
+from basic_compiler.errors import RunTimeError
 
 
 ########################
@@ -39,7 +40,30 @@ class Context:
         self.display_name = display_name
         self.parent = parent
         self.parent_entry_pos = parent_entry_pos
+        self.symbol_table = None
+
+
+ ########################
+# Symbol Table
+########################
+
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+        self.parent = None
     
+    def get(self, name):
+        value = self.symbols.get(name, None)
+        if not value and self.parent:
+            return self.parent.get(name)
+        return value
+    
+    def set(self, name, value):
+        self.symbols[name] = value
+    
+    def remove(self, name):
+        del self.symbols[name]
+
 
 class Interpreter:
     def visit(self, node, context) -> Number:
@@ -89,3 +113,25 @@ class Interpreter:
         if error:
             return res.failure(error) 
         return res.success(num.set_position(node.pos_start, node.pos_end))
+    
+    def visi_VarAccessNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_token.value
+        value = context.symbol_table.get(var_name)
+
+        if not value:
+            return res.failure(
+                RunTimeError(node.pos_start, node.pos_start, 
+                f"'{var_name}' is not defined",
+                context
+            ))
+        return res.success(value)
+    
+    def visi_VarAssignNode(self, node, context):
+        res = RTResult()
+        var_name = node.var_name_token.value
+        value = res.register(self.visit(node.value_node, context))
+        if res.error:
+            return res
+        context.symbol_table.set(var_name, value)
+        return res.success(value)

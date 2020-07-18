@@ -13,6 +13,9 @@ token_types = {
     '/': 'DIV',
     '(': 'LPAREN',
     ')': 'RPAREN',
+    'identifier': 'IDENTIFIER',
+    'keyword': 'KEYWORD',
+    '=': 'EQ',
     'EOF': 'EOF'
 }
 
@@ -27,8 +30,10 @@ class Token:
             
         if pos_end:
             self.pos_end = pos_end.copy()
+    
+    def matches(self, type, value):
+        return self.type == type and self.value == value
         
-
     def __repr__(self):
         if self.value:
             return f'{self.type}:{self.value}'    

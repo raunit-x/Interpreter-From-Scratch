@@ -1,5 +1,8 @@
 ####################################
 # CONSTANTS
 ####################################
+import string
 DIGITS = '0123456789'
-VALID_CHARS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+LETTERS = string.ascii_letters
+LETTERS_DIGITS = LETTERS + DIGITS
+KEYWORDS = {'var'}

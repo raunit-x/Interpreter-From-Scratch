@@ -60,6 +60,9 @@ class Parser:
         if tok.type in (token_types['int'], token_types['float']):
             res.register(self.advance())
             return res.success(nodes.NumberNode(tok))
+        elif tok.type == token_types['identifier']:
+            res.register(self.advance())
+            return res.success(nodes.VarAccessNode(tok))
         elif tok.type == token_types['(']:
             res.register(self.advance())
             expr = res.register(self.expr())
@@ -110,4 +113,25 @@ class Parser:
         return self.bin_op(self.factor, [token_types['*'], token_types['/']], self.factor)
 
     def expr(self):
-        return self.bin_op(self.term, [token_types['+'], token_types['-']], self.term)
+        res = ParseResult()
+        if self.current_token.matches(token_types['keyword'], 'var'):
+            res.register(self.advance())
+            if self.current_token.type != token_types['identifier']:
+                return res.failure(InvalidSynatxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected an identifier"
+                ))
+            var_name = self.current_token
+            res.register(self.advance())
+            if self.current_token.type != token_types['=']:
+                return res.failure(InvalidSynatxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected an '='"
+                ))
+            res.register(self.advance())
+            temp_expr = res.register(self.expr())
+            if res.error:
+                return res
+            return res.success(nodes.VarAssignNode(var_name, temp_expr))
+        else:
+            return self.bin_op(self.term, [token_types['+'], token_types['-']], self.term)
