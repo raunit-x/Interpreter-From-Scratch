@@ -15,7 +15,7 @@ def run(fn, text):
     # Generate Tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    print(f'Tokens: {tokens}')
+    # print(f'Tokens: {tokens}')
     if error:
         return None, error
     # Generate AST

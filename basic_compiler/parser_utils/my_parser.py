@@ -7,26 +7,25 @@ class ParseResult:
     def __init__(self):
         self.error = None
         self.node = None
+        self.advance_count = 0
 
+    def register_advancement(self):
+        self.advance_count += 1
+    
     def register(self, res):
-        if isinstance(res, ParseResult):
-            if res.error:
-                self.error = res.error
-            return res.node
-        return res
+        self.advance_count += res.advance_count
+        if res.error:
+            self.error = res.error
+        return res.node
 
     def success(self, node):
         self.node = node
         return self
 
     def failure(self, error):
-        self.error = error
+        if not self.error or not self.advance_count:
+            self.error = error
         return self
-
-######################
-# PARSER
-######################
-
 
 class Parser:
     def __init__(self, tokens: list):
@@ -48,28 +47,29 @@ class Parser:
                 "Expected '+', '-', '*' or '/' "
             ))
         return res
-
-    ################################
+ 
     # implmentation of grammar rules
-    ################################
-
     def atom(self):
         res = ParseResult()
         tok = self.current_token
 
         if tok.type in (token_types['int'], token_types['float']):
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             return res.success(nodes.NumberNode(tok))
         elif tok.type == token_types['identifier']:
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             return res.success(nodes.VarAccessNode(tok))
         elif tok.type == token_types['(']:
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             expr = res.register(self.expr())
             if res.error:
                 return res
             if self.current_token.type == token_types[')']:
-                res.register(self.advance())
+                res.register_advancement()
+                self.advance()
                 if res.error:
                     return res
                 return res.success(expr)
@@ -78,7 +78,7 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
         return res.failure(
             InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
-            "Expected int, float, '-', '+' or '('"
+            "Expected float, identifier, int, '-', '+' or '('"
         ))
     
     def power(self):
@@ -88,7 +88,8 @@ class Parser:
         res = ParseResult()
         tok = self.current_token
         if tok.type in (token_types['+'], token_types['-']):
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             factor = res.register(self.factor())
             if res.error:
                 return res
@@ -102,7 +103,8 @@ class Parser:
             return res
         while self.current_token and self.current_token.type in token_match:
             op_token = self.current_token
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             right = res.register(func_right())
             if res.error:
                 return res
@@ -115,23 +117,32 @@ class Parser:
     def expr(self):
         res = ParseResult()
         if self.current_token.matches(token_types['keyword'], 'var'):
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             if self.current_token.type != token_types['identifier']:
                 return res.failure(InvalidSynatxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     "Expected an identifier"
                 ))
             var_name = self.current_token
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             if self.current_token.type != token_types['=']:
                 return res.failure(InvalidSynatxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     "Expected an '='"
                 ))
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             temp_expr = res.register(self.expr())
             if res.error:
                 return res
             return res.success(nodes.VarAssignNode(var_name, temp_expr))
-        else:
-            return self.bin_op(self.term, [token_types['+'], token_types['-']], self.term)
+        
+        node = res.register(self.bin_op(self.term, [token_types['+'], token_types['-']], self.term))
+        if res.error:
+            return res.failure(
+            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            "Expected float, identifier, int, 'var', '-', '+' or '('"
+        ))
+        return res.success(node)

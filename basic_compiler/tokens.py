@@ -36,5 +36,5 @@ class Token:
         
     def __repr__(self):
         if self.value:
-            return f'{self.type}:{self.value}'    
-        return f'{self.type}'
+            return f'({self.type}:{self.value})'    
+        return f'({self.type})'
