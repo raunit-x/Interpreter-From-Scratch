@@ -5,6 +5,7 @@
 
 token_types = {
     '+': 'PLUS',
+    '^': 'POW',
     'float': 'FLOAT',
     'int': 'INT',
     '*': 'MUL',

@@ -71,6 +71,8 @@ class Interpreter:
             result, error = left.multiplied_by(right)
         elif node.operator_token.type == token_types['/']:
             result, error = left.divided_by(right)
+        elif node.operator_token.type == token_types['^']:
+            result, error = left.exponentiation_by(right)
         if error:
             return res.failure(error)
         return res.success(result.set_position(node.pos_start, node.pos_end))

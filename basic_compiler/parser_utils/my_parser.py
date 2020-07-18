@@ -44,25 +44,20 @@ class Parser:
         res = self.expr()
         if not res.error and self.current_token.type != token_types['EOF']:
             return res.failure(InvalidSynatxError(
-                self.current_token.pos_start, self.current_token.pos_end, 
+                self.current_token.pos_start, self.current_token.pos_end,
                 "Expected '+', '-', '*' or '/' "
             ))
-        return res 
+        return res
 
     ################################
-    # implmentation of grammar rulesf
+    # implmentation of grammar rules
     ################################
 
-    def factor(self):
+    def atom(self):
         res = ParseResult()
         tok = self.current_token
-        if tok.type in (token_types['+'], token_types['-']):
-            res.register(self.advance())
-            factor = res.register(self.factor())
-            if res.error:
-                return res
-            return res.success(nodes.UnaryOperationNode(tok, factor))
-        elif tok.type in (token_types['int'], token_types['float']):
+
+        if tok.type in (token_types['int'], token_types['float']):
             res.register(self.advance())
             return res.success(nodes.NumberNode(tok))
         elif tok.type == token_types['(']:
@@ -74,27 +69,45 @@ class Parser:
                 res.register(self.advance())
                 if res.error:
                     return res
-                return res.success(expr) 
+                return res.success(expr)
             else:
-                res.failure(InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
-        return res.failure(InvalidSynatxError(tok.pos_start, tok.pos_end, 'Expected int or float'))
+                res.failure(InvalidSynatxError(
+                    self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
+        return res.failure(
+            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            "Expected int, float, '-', '+' or '('"
+        ))
+    
+    def power(self):
+        return self.bin_op(self.atom, [token_types['^']], self.factor)
 
-    def bin_op(self, func, token_match):
+    def factor(self):
         res = ParseResult()
-        left = res.register(func())
+        tok = self.current_token
+        if tok.type in (token_types['+'], token_types['-']):
+            res.register(self.advance())
+            factor = res.register(self.factor())
+            if res.error:
+                return res
+            return res.success(nodes.UnaryOperationNode(tok, factor))
+        return self.power()
+
+    def bin_op(self, func_left, token_match, func_right):
+        res = ParseResult()
+        left = res.register(func_left())
         if res.error:
             return res
         while self.current_token and self.current_token.type in token_match:
             op_token = self.current_token
             res.register(self.advance())
-            right = res.register(func())
+            right = res.register(func_right())
             if res.error:
                 return res
             left = nodes.BinaryOperationNode(op_token, left, right)
         return res.success(left)
 
     def term(self):
-        return self.bin_op(self.factor, [token_types['*'], token_types['/']])
+        return self.bin_op(self.factor, [token_types['*'], token_types['/']], self.factor)
 
     def expr(self):
-        return self.bin_op(self.term, [token_types['+'], token_types['-']])
+        return self.bin_op(self.term, [token_types['+'], token_types['-']], self.term)
