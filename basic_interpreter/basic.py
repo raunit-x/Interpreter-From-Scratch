@@ -23,7 +23,7 @@ def run(fn, text):
     ast = parser.parse() 
     if ast.error:
         return None, ast.error
-    # print(f'AST Tree: {ast.node}')
+    print(f'AST Tree: {ast.node}')
     # Run Program
     interpreter = Interpreter()
     context = Context(fn)
