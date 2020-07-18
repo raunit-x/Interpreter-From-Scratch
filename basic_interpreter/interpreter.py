@@ -85,6 +85,22 @@ class Interpreter:
             result, error = left.divided_by(right)
         elif node.operator_token.type == token_types['^']:
             result, error = left.exponentiation_by(right)
+        elif node.operator_token.type == token_types['==']:
+            result, error = left.get_comparison_eq(right)
+        elif node.operator_token.type == token_types['<']:
+            result, error = left.get_comparison_lt(right)
+        elif node.operator_token.type == token_types['>']:
+            result, error = left.get_comparison_gt(right)
+        elif node.operator_token.type == token_types['<=']:
+            result, error = left.get_comparison_lte(right)
+        elif node.operator_token.type == token_types['>=']:
+            result, error = left.get_comparison_gte(right)
+        elif node.operator_token.type == token_types['TT_NE']:
+            result, error = left.get_comparison_ne(right)
+        elif node.operator_token.matches(token_types['keyword'], "AND"):
+            result, error = left.anded_by(right)
+        elif node.operator_token.matches(token_types['keyword'], "OR"):
+            result, error = left.ored_by(right)
         if error:
             return res.failure(error)
         return res.success(result.set_position(node.pos_start, node.pos_end))
@@ -98,6 +114,8 @@ class Interpreter:
         error = None
         if node.operator_token.type == token_types['-']:
             num, error = num.multiplied_by(Number(-1))
+        elif node.operator_token.matches(token_types['keyword'], "NOT"):
+            num, error = num.notted()
         if error:
             return res.failure(error) 
         return res.success(num.set_position(node.pos_start, node.pos_end))

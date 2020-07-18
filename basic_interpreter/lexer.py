@@ -58,6 +58,24 @@ class Lexer:
             self.advance()
             token_type = token_types['==']
         return Token(type=token_type, pos_start=pos_start, pos_end=self.pos.copy())
+    
+    def make_less_than(self):
+        token_type = token_types['<']
+        pos_start = self.pos.copy()
+        self.advance()
+        if self.current_char == '=':
+            self.advance()
+            token_type = token_types['<=']
+        return Token(type=token_type, pos_start=pos_start, pos_end=self.pos.copy())
+    
+    def make_greater_than(self):
+        token_type = token_types['>']
+        pos_start = self.pos.copy()
+        self.advance()
+        if self.current_char == '=':
+            self.advance()
+            token_type = token_types['>=']
+        return Token(type=token_type, pos_start=pos_start, pos_end=self.pos.copy())
 
     def make_tokens(self):
         tokens = []

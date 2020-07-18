@@ -42,6 +42,7 @@ class Parser:
     def parse(self):
         res = self.expr()
         if not res.error and self.current_token.type != token_types['EOF']:
+            print('here')
             return res.failure(InvalidSynatxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected '+', '-', '*' or '/' "
@@ -96,12 +97,21 @@ class Parser:
             return res.success(nodes.UnaryOperationNode(tok, factor))
         return self.power()
 
+    def match_token_with_val(self, token_match):
+        for val in token_match:
+            if isinstance(val, tuple):
+                if self.current_token.type == val[0] and self.current_token.value == val[1]:
+                    return True
+            elif self.current_token.type == val:
+                    return True
+        return False
+    
     def bin_op(self, func_left, token_match, func_right):
         res = ParseResult()
         left = res.register(func_left())
         if res.error:
             return res
-        while self.current_token and self.current_token.type in token_match:
+        while self.current_token and self.match_token_with_val(token_match):
             op_token = self.current_token
             res.register_advancement()
             self.advance()
@@ -116,7 +126,7 @@ class Parser:
 
     def expr(self):
         res = ParseResult()
-        if self.current_token.matches(token_types['keyword'], 'var'):
+        if self.current_token.matches(token_types['keyword'], 'VAR'):
             res.register_advancement()
             self.advance()
             if self.current_token.type != token_types['identifier']:
@@ -136,13 +146,43 @@ class Parser:
             self.advance()
             temp_expr = res.register(self.expr())
             if res.error:
-                return res
+                return res.failure(
+                    InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+                    "Expected float, identifier, int, '-', '+', 'NOT' or '('"
+                ))
             return res.success(nodes.VarAssignNode(var_name, temp_expr))
         
-        node = res.register(self.bin_op(self.term, [token_types['+'], token_types['-']], self.term))
+        node = res.register(self.bin_op(self.comp_expr, [(token_types['keyword'], "AND"), (token_types['keyword'], "OR")], self.comp_expr))
         if res.error:
             return res.failure(
             InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, 'var', '-', '+' or '('"
+        ))
+        return res.success(node)
+    
+    def arith_expr(self):
+        return self.bin_op(self.term, [token_types['+'], token_types['-']], self.term)
+
+    def comp_expr(self):
+        res = ParseResult()
+        if self.current_token.matches(token_types['keyword'], "NOT"):
+            op_tok = self.current_token
+            res.register_advancement()
+            self.advance()
+            node = res.register(self.comp_expr())
+            if res.error:
+                return res
+            return res.success(nodes.UnaryOperationNode(op_tok, node))
+        node = res.register(
+            self.bin_op(
+                self.arith_expr, 
+                [token_types['=='], token_types['<'], token_types['>'], token_types['<='], token_types['>='], token_types['TT_NE']],
+                self.arith_expr
+            )
+        )
+        if res.error:
+            return res.failure(
+            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            "Expected float, identifier, int, '-', '+', 'NOT' or '('"
         ))
         return res.success(node)

@@ -8,12 +8,14 @@ from basic_interpreter.number import Number
 
 global_symbol_table = SymbolTable()
 global_symbol_table.set("null", Number(0))
+global_symbol_table.set("TRUE", Number(1))
+global_symbol_table.set("FALSE", Number(0))
 
 def run(fn, text):
     # Generate Tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    # print(f'Tokens: {tokens}')
+    print(f'Tokens: {tokens}')
     if error:
         return None, error
     # Generate AST
