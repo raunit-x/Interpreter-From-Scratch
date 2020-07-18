@@ -1,6 +1,6 @@
-from basic_compiler.tokens import token_types, Token
-from basic_compiler.parser_utils import nodes
-from basic_compiler.errors import InvalidSynatxError
+from basic_interpreter.tokens import token_types, Token
+from basic_interpreter.parser_utils import nodes
+from basic_interpreter.errors import InvalidSynatxError
 
 
 class ParseResult:

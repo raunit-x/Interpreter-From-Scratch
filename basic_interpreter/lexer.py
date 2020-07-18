@@ -1,7 +1,7 @@
-from basic_compiler.position import Position
-from basic_compiler.tokens import Token, token_types
-from basic_compiler.errors import IllegalCharError
-from basic_compiler.constants import DIGITS, LETTERS, LETTERS_DIGITS, KEYWORDS
+from basic_interpreter.position import Position
+from basic_interpreter.tokens import Token, token_types
+from basic_interpreter.errors import IllegalCharError
+from basic_interpreter.constants import DIGITS, LETTERS, LETTERS_DIGITS, KEYWORDS
 ####################################
 # LEXER
 ####################################

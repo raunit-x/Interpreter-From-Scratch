@@ -1,7 +1,7 @@
-from basic_compiler.number import Number
-from basic_compiler.parser_utils.nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
-from basic_compiler.tokens import token_types
-from basic_compiler.errors import RunTimeError
+from basic_interpreter.number import Number
+from basic_interpreter.parser_utils.nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
+from basic_interpreter.tokens import token_types
+from basic_interpreter.errors import RunTimeError
 
 
 ########################

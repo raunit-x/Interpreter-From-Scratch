@@ -1,9 +1,9 @@
-from basic_compiler.errors import Error, IllegalCharError
-from basic_compiler.position import Position
-from basic_compiler.lexer import Lexer
-from basic_compiler.parser_utils.my_parser import Parser
-from basic_compiler.interpreter import Interpreter, Context, SymbolTable
-from basic_compiler.number import Number
+from basic_interpreter.errors import Error, IllegalCharError
+from basic_interpreter.position import Position
+from basic_interpreter.lexer import Lexer
+from basic_interpreter.parser_utils.my_parser import Parser
+from basic_interpreter.interpreter import Interpreter, Context, SymbolTable
+from basic_interpreter.number import Number
 
 #######################
 # RUN

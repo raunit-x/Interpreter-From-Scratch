@@ -1,4 +1,4 @@
-from basic_compiler.errors import RunTimeError
+from basic_interpreter.errors import RunTimeError
 def fast_exponentiation(a, b):
     if b < 0:
         return 1 / fast_exponentiation(a, -b)
