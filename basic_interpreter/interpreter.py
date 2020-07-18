@@ -4,10 +4,6 @@ from basic_interpreter.tokens import token_types
 from basic_interpreter.errors import RunTimeError
 
 
-########################
-# Runtime Result
-########################
-
 class RTResult:
     def __init__(self):
         self.value = None
@@ -30,11 +26,6 @@ class RTResult:
         return self
 
 
-
-########################
-# Context
-########################
-
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):
         self.display_name = display_name
@@ -43,9 +34,6 @@ class Context:
         self.symbol_table = None
 
 
- ########################
-# Symbol Table
-########################
 
 class SymbolTable:
     def __init__(self):

@@ -2,9 +2,7 @@ from basic_interpreter.position import Position
 from basic_interpreter.tokens import Token, token_types
 from basic_interpreter.errors import IllegalCharError
 from basic_interpreter.constants import DIGITS, LETTERS, LETTERS_DIGITS, KEYWORDS
-####################################
-# LEXER
-####################################
+
 
 class Lexer:
     def __init__(self, file_name, text):

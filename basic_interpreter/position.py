@@ -1,7 +1,3 @@
-
-####################################
-# POSITION
-####################################
 class Position:
     def __init__(self, index, line, column, file_name=None, file_text=None):
         self.index = index

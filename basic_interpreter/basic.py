@@ -5,9 +5,7 @@ from basic_interpreter.parser_utils.my_parser import Parser
 from basic_interpreter.interpreter import Interpreter, Context, SymbolTable
 from basic_interpreter.number import Number
 
-#######################
-# RUN
-#######################
+
 global_symbol_table = SymbolTable()
 global_symbol_table.set("null", Number(0))
 
