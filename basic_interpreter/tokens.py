@@ -11,6 +11,12 @@ token_types = {
     'identifier': 'IDENTIFIER',
     'keyword': 'KEYWORD',
     '=': 'EQ',
+    '==': 'EE',
+    '<=': 'LTE',
+    '<': 'LT',
+    '>=': 'GTE',
+    '>': 'GT',
+    'TT_NE': 'NE',
     'EOF': 'EOF'
 }
 

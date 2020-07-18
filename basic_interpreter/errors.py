@@ -34,3 +34,10 @@ class RunTimeError(Error):
             pos = context.parent_entry_pos
             context = context.parent
         return f'Traceback (most recent call):\n{result}'
+
+class ExpectedCharError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Expected Char Error', details)
+    
+    def __repr__(self):
+        return super().__repr__()

@@ -1,6 +1,6 @@
 from basic_interpreter.position import Position
 from basic_interpreter.tokens import Token, token_types
-from basic_interpreter.errors import IllegalCharError
+from basic_interpreter.errors import IllegalCharError, ExpectedCharError
 from basic_interpreter.constants import DIGITS, LETTERS, LETTERS_DIGITS, KEYWORDS
 
 
@@ -41,15 +41,43 @@ class Lexer:
             self.advance()
         tok_type = token_types['keyword'] if id_str in KEYWORDS else token_types['identifier']
         return Token(tok_type, id_str, pos_start, self.pos.copy())
+    
+    def make_not_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+        if self.current_char == '=':
+            self.advance()
+            return Token(type=token_types['TT_NE'], pos_start=pos_start, pos_end=self.pos.copy()), None
+        return [], ExpectedCharError(pos_start, self.pos.copy(), "Expected '=' after '!'")
+    
+    def make_equals(self):
+        token_type = token_types['=']
+        pos_start = self.pos.copy()
+        self.advance()
+        if self.current_char == '=':
+            self.advance()
+            token_type = token_types['==']
+        return Token(type=token_type, pos_start=pos_start, pos_end=self.pos.copy())
 
     def make_tokens(self):
         tokens = []
         while self.current_char:
             if self.current_char in [' ', '\t', '\n']:
                 self.advance()
+            elif self.current_char == '=':
+                tokens.append(self.make_equals())
             elif self.current_char in token_types:
                 tokens.append(Token(type=token_types[self.current_char], pos_start=self.pos))
                 self.advance()
+            elif self.current_char == '!':
+                tok, error = self.make_not_equals()
+                if error:
+                    return [], error
+                tokens.append(tok)
+            elif self.current_char == '<':
+                tokens.append(self.make_less_than())
+            elif self.current_char == '>':
+                tokens.append(self.make_greater_than())
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
             elif self.current_char in LETTERS:
