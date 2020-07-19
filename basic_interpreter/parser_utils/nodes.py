@@ -47,3 +47,10 @@ class VarAssignNode:
     
     def __repr__(self):
         return f'[{self.var_name_token}: {self.value_node}]'
+
+class IFNode:
+    def __init__(self, cases, else_case):
+        self.cases = cases
+        self.else_case = else_case
+        self.pos_start = self.cases[0][0].pos_start
+        self.pos_end = else_case.pos_end if else_case else self.cases[-1][0].pos_end

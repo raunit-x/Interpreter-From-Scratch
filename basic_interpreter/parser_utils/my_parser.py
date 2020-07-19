@@ -112,7 +112,7 @@ class Parser:
                 return res
             else_case = expr
         
-        return res.success(nodes.IfNode(cases, else_case))
+        return res.success(nodes.IFNode(cases, else_case))
 
     def atom(self):
         res = ParseResult()
