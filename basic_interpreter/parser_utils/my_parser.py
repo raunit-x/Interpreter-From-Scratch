@@ -50,6 +50,70 @@ class Parser:
         return res
  
     # implmentation of grammar rules
+
+    def if_expr(self):
+        res = ParseResult()
+        cases = []
+        else_case = None
+
+        if not self.current_token.matches(token_types['keyword'], 'IF'):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'IF'"
+            ))
+
+        res.register_advancement()
+        self.advance()
+
+        condition = res.register(self.expr())
+        if res.error:
+            return res
+        
+        if not self.current_token.matches(token_types['keyword'], 'THEN'):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'THEN'"
+            ))
+        
+        res.register_advancement()
+        self.advance()
+
+        expr = res.register(self.expr())
+        if res.error:
+            return res
+        
+        cases.append((condition, expr))
+
+        while self.current_token.matches(token_types['keyword'], 'ELIF'):
+            res.register_advancement()
+            self.advance()
+            condition = res.register(self.expr())
+            if res.error:
+                return res
+            if not self.current_token.matches(token_types['keyword'], 'THEN'):
+                return res.failure(InvalidSynatxError(
+                    self.current_token.pos_start, self.current_token.pos_end,
+                    "Expected 'THEN'"
+                ))
+            res.register_advancement()
+            self.advance()
+
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            cases.append((condition, expr))
+        
+        if self.current_token.matches(token_types['keyword'], 'ELSE'):
+            res.register_advancement()
+            self.advance()
+
+            expr = res.register(self.expr())
+            if res.error:
+                return res
+            else_case = expr
+        
+        return res.success(nodes.IfNode(cases, else_case))
+
     def atom(self):
         res = ParseResult()
         tok = self.current_token
@@ -77,6 +141,11 @@ class Parser:
             else:
                 res.failure(InvalidSynatxError(
                     self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
+        elif tok.matches(token_types['keyword'], "IF"):
+            if_expr = res.register(self.if_expr())
+            if res.error:
+                return res
+            return res.success(if_expr)
         return res.failure(
             InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, '-', '+' or '('"
