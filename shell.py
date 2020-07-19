@@ -4,5 +4,5 @@ while True:
     result, error = basic.run('<stdin>', text)
     if error:
         print(error)
-    else:
+    elif result:
         print(result)
