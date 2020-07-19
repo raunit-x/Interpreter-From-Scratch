@@ -11,5 +11,9 @@ KEYWORDS = {
     'IF',
     'ELIF',
     'ELSE',
-    'THEN'
+    'THEN',
+    'FOR',
+    'TO',
+    'STEP',
+    'WHILE'
 }

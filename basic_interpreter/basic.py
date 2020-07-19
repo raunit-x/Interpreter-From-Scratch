@@ -15,7 +15,7 @@ def run(fn, text):
     # Generate Tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    # print(f'Tokens: {tokens}')
+    print(f'Tokens: {tokens}')
     if error:
         return None, error
     # Generate AST
@@ -23,7 +23,6 @@ def run(fn, text):
     ast = parser.parse() 
     if ast.error:
         return None, ast.error
-    print(f'AST Tree: {ast.node}')
     # Run Program
     interpreter = Interpreter()
     context = Context(fn)

@@ -42,7 +42,6 @@ class Parser:
     def parse(self):
         res = self.expr()
         if not res.error and self.current_token.type != token_types['EOF']:
-            print('here')
             return res.failure(InvalidSynatxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected '+', '-', '*' or '/' "
@@ -72,7 +71,7 @@ class Parser:
         if not self.current_token.matches(token_types['keyword'], 'THEN'):
             return res.failure(InvalidSynatxError(
                 self.current_token.pos_start, self.current_token.pos_end,
-                "Expected 'THEN'"
+                "Expected 'THEN' "
             ))
         
         res.register_advancement()
@@ -113,6 +112,91 @@ class Parser:
             else_case = expr
         
         return res.success(nodes.IFNode(cases, else_case))
+    
+    def for_expr(self):
+        res = ParseResult()
+        if not self.current_token.matches(token_types['keyword'], "FOR"):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'FOR' keyword"
+            ))
+        res.register_advancement()
+        self.advance()
+        if self.current_token.type != token_types['identifier']:
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected identifier"
+            ))
+        var_name = self.current_token
+        print(f"var_name: {var_name}")
+        res.register_advancement()
+        self.advance()
+        if self.current_token.type != token_types['=']:
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected '='"
+            ))
+        res.register_advancement()
+        self.advance()
+        start_value = res.register(self.expr())
+        if res.error:
+            return res
+        if not self.current_token.matches(token_types['keyword'], 'TO'):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'TO'"
+            ))
+        res.register_advancement()
+        self.advance()
+
+        end_value = res.register(self.expr())
+        if res.error:
+            return res
+        
+        step_value = None
+        if self.current_token.matches(token_types['keyword'], 'STEP'):
+            res.register_advancement()
+            self.advance()
+            step_value = res.register(self.expr())
+            if res.error:
+                return res
+        
+        if not self.current_token.matches(token_types['keyword'], 'THEN'):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'THEN'"
+            ))
+        res.register_advancement()
+        self.advance()
+
+        body = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success(nodes.ForNode(var_name, start_value, end_value, step_value, body))
+    
+    def while_expr(self):
+        res = ParseResult()
+        if not self.current_token.matches(token_types['keyword'], 'WHILE'):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'WHILE'"
+            ))
+        res.register_advancement()
+        self.advance()
+        condition = res.register(self.expr())
+        if res.error:
+            return res
+        if not self.current_token.matches(token_types['keyword'], "THEN"):
+            return res.failure(InvalidSynatxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'THEN'"
+            ))
+        res.register_advancement()
+        self.advance()
+        body = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success(nodes.WhileNode(condition, body))
 
     def atom(self):
         res = ParseResult()
@@ -146,6 +230,16 @@ class Parser:
             if res.error:
                 return res
             return res.success(if_expr)
+        elif tok.matches(token_types['keyword'], "WHILE"):
+            while_expr = res.register(self.while_expr())
+            if res.error:
+                return res
+            return res.success(while_expr)
+        elif tok.matches(token_types['keyword'], "FOR"):
+            for_expr = res.register(self.for_expr())
+            if res.error:
+                return res
+            return res.success(for_expr)
         return res.failure(
             InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, '-', '+' or '('"
@@ -220,7 +314,6 @@ class Parser:
                     "Expected float, identifier, int, '-', '+', 'NOT' or '('"
                 ))
             return res.success(nodes.VarAssignNode(var_name, temp_expr))
-        
         node = res.register(self.bin_op(self.comp_expr, [(token_types['keyword'], "AND"), (token_types['keyword'], "OR")], self.comp_expr))
         if res.error:
             return res.failure(
