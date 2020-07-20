@@ -17,7 +17,9 @@ token_types = {
     '>=': 'GTE',
     '>': 'GT',
     'TT_NE': 'NE',
-    'EOF': 'EOF'
+    'EOF': 'EOF',
+    ',': 'COMMA',
+    '->': 'ARROW',
 }
 
 class Token:

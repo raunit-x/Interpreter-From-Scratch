@@ -76,6 +76,15 @@ class Lexer:
             self.advance()
             token_type = token_types['>=']
         return Token(type=token_type, pos_start=pos_start, pos_end=self.pos.copy())
+    
+    def make_arrow_or_minus(self):
+        token_type = token_types['-']
+        pos_start = self.pos.copy()
+        self.advance()
+        if self.current_char == '>':
+            self.advance()
+            token_type = token_types['->']
+        return Token(token_type, pos_start, self.pos.copy())
 
     def make_tokens(self):
         tokens = []
@@ -84,6 +93,8 @@ class Lexer:
                 self.advance()
             elif self.current_char == '=':
                 tokens.append(self.make_equals())
+            elif self.current_char == '-':
+                tokens.append(self.make_arrow_or_minus())
             elif self.current_char in token_types:
                 tokens.append(Token(type=token_types[self.current_char], pos_start=self.pos))
                 self.advance()

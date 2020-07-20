@@ -1,6 +1,6 @@
 from basic_interpreter.tokens import token_types, Token
 from basic_interpreter.parser_utils import nodes
-from basic_interpreter.errors import InvalidSynatxError
+from basic_interpreter.errors import InvalidSyntaxError
 
 
 class ParseResult:
@@ -42,7 +42,7 @@ class Parser:
     def parse(self):
         res = self.expr()
         if not res.error and self.current_token.type != token_types['EOF']:
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected '+', '-', '*' or '/' "
             ))
@@ -56,7 +56,7 @@ class Parser:
         else_case = None
 
         if not self.current_token.matches(token_types['keyword'], 'IF'):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'IF'"
             ))
@@ -69,7 +69,7 @@ class Parser:
             return res
         
         if not self.current_token.matches(token_types['keyword'], 'THEN'):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'THEN' "
             ))
@@ -90,7 +90,7 @@ class Parser:
             if res.error:
                 return res
             if not self.current_token.matches(token_types['keyword'], 'THEN'):
-                return res.failure(InvalidSynatxError(
+                return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     "Expected 'THEN'"
                 ))
@@ -116,14 +116,14 @@ class Parser:
     def for_expr(self):
         res = ParseResult()
         if not self.current_token.matches(token_types['keyword'], "FOR"):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'FOR' keyword"
             ))
         res.register_advancement()
         self.advance()
         if self.current_token.type != token_types['identifier']:
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected identifier"
             ))
@@ -132,7 +132,7 @@ class Parser:
         res.register_advancement()
         self.advance()
         if self.current_token.type != token_types['=']:
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected '='"
             ))
@@ -142,7 +142,7 @@ class Parser:
         if res.error:
             return res
         if not self.current_token.matches(token_types['keyword'], 'TO'):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'TO'"
             ))
@@ -162,7 +162,7 @@ class Parser:
                 return res
         
         if not self.current_token.matches(token_types['keyword'], 'THEN'):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'THEN'"
             ))
@@ -177,7 +177,7 @@ class Parser:
     def while_expr(self):
         res = ParseResult()
         if not self.current_token.matches(token_types['keyword'], 'WHILE'):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'WHILE'"
             ))
@@ -187,7 +187,7 @@ class Parser:
         if res.error:
             return res
         if not self.current_token.matches(token_types['keyword'], "THEN"):
-            return res.failure(InvalidSynatxError(
+            return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 "Expected 'THEN'"
             ))
@@ -197,6 +197,70 @@ class Parser:
         if res.error:
             return res
         return res.success(nodes.WhileNode(condition, body))
+
+    def func_def(self):
+        res = ParseResult()
+        if not self.current_token.matches(token_types['keyword'], 'FUN'):
+            return  res.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected 'FUN' keyword"
+            ))
+        res.register_advancement()
+        self.advance()
+
+        var_name_token = None
+        if self.current_token.type == token_types['identifier']:
+            var_name_token = self.current_token
+            res.register_advancement()
+            self.advance()
+        
+        if self.current_token.type != token_types['(']:
+            return  res.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                "Expected '('"
+            ))
+        res.register_advancement()
+        self.advance()
+        
+        arg_name_tokens = []
+        if self.current_token.type == token_types['identifier']:
+            arg_name_tokens.append(self.current_token)
+            res.register_advancement()
+            self.advance()
+
+            while self.current_token.type == token_types[',']:
+                res.register_advancement()
+                self.advance()
+                if self.current_token.type != token_types['identifier']:
+                    return  res.failure(InvalidSyntaxError(
+                        self.current_token.pos_start, self.current_token.pos_end,
+                        "Expected an identifier"
+                    ))
+                arg_name_tokens.append(self.current_token)
+                res.register_advancement()
+                self.advance()
+        if self.current_token.type != token_types[')']:
+            return res.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                f"Expected a ') or ' {',' if arg_name_tokens else 'identifier'} "
+            ))
+        
+        res.register_advancement()
+        self.advance()
+
+        if self.current_token != token_types['->']:
+            return res.failure(InvalidSyntaxError(
+                self.current_token.pos_start, self.current_token.pos_end,
+                f"Expected '->'"
+            ))
+        
+        res.register_advancement()
+        body_node = res.register(self.expr())
+        if res.error:
+            return res
+        return res.success(nodes.FuncDefNode(
+            var_name_token, arg_name_tokens, body_node
+        ))        
 
     def atom(self):
         res = ParseResult()
@@ -223,7 +287,7 @@ class Parser:
                     return res
                 return res.success(expr)
             else:
-                res.failure(InvalidSynatxError(
+                res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end, "Expected ')'"))
         elif tok.matches(token_types['keyword'], "IF"):
             if_expr = res.register(self.if_expr())
@@ -240,8 +304,13 @@ class Parser:
             if res.error:
                 return res
             return res.success(for_expr)
+        elif tok.matches(token_types['keyword'], 'FUN'):
+            func_def = res.register(self.func_def())
+            if res.error:
+                return res
+            return res.success(func_def)
         return res.failure(
-            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, '-', '+' or '('"
         ))
     
@@ -293,7 +362,7 @@ class Parser:
             res.register_advancement()
             self.advance()
             if self.current_token.type != token_types['identifier']:
-                return res.failure(InvalidSynatxError(
+                return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     "Expected an identifier"
                 ))
@@ -301,7 +370,7 @@ class Parser:
             res.register_advancement()
             self.advance()
             if self.current_token.type != token_types['=']:
-                return res.failure(InvalidSynatxError(
+                return res.failure(InvalidSyntaxError(
                     self.current_token.pos_start, self.current_token.pos_end,
                     "Expected an '='"
                 ))
@@ -310,14 +379,14 @@ class Parser:
             temp_expr = res.register(self.expr())
             if res.error:
                 return res.failure(
-                    InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+                    InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, 
                     "Expected float, identifier, int, '-', '+', 'NOT' or '('"
                 ))
             return res.success(nodes.VarAssignNode(var_name, temp_expr))
         node = res.register(self.bin_op(self.comp_expr, [(token_types['keyword'], "AND"), (token_types['keyword'], "OR")], self.comp_expr))
         if res.error:
             return res.failure(
-            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, 'var', '-', '+' or '('"
         ))
         return res.success(node)
@@ -344,7 +413,7 @@ class Parser:
         )
         if res.error:
             return res.failure(
-            InvalidSynatxError(self.current_token.pos_start, self.current_token.pos_end, 
+            InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, 
             "Expected float, identifier, int, '-', '+', 'NOT' or '('"
         ))
         return res.success(node)

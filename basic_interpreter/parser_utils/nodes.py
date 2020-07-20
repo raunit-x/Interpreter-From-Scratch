@@ -71,4 +71,28 @@ class WhileNode:
         self.body_node = body_node
         self.pos_start = self.condition_node.pos_start
         self.pos_end = self.body_node.pos_end
+
+class FuncDefNode:
+    def __init__(self, var_name_token, arg_name_tokens, body_node):
+        self.var_name_token = var_name_token
+        self.arg_name_tokens = arg_name_tokens
+        self.body_node = body_node
+        if self.var_name_token:
+            self.pos_start = self.var_name_token.pos_start
+        elif len(self.arg_name_tokens):
+            self.pos_start = self.var_name_token[0].pos_start
+        else:
+            self.pos_start = self.body_node.pos_start
+        self.pos_end = self.body_node.pos_end
+
+    def __repr__(self):
+        return f"<Function {self.var_name_token if self.var_name_token else 'Anonymous'}>"
+
+
+class CallNode:
+    def __init__(self, node_to_call, arg_nodes):
+        self.node_to_call = node_to_call
+        self.arg_nodes = arg_nodes
+        self.pos_start = self.node_to_call.pos_start
+        self.pos_end = self.node_to_call.pos_end if not len(self.arg_nodes) else self.arg_nodes[-1].pos_end
         
