@@ -21,8 +21,10 @@ def run(fn, text):
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse() 
+    print(f'AST: {ast.node}')
     if ast.error:
         return None, ast.error
+    
     # Run Program
     interpreter = Interpreter()
     context = Context(fn)

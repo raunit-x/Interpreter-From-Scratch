@@ -1,4 +1,4 @@
-from basic_interpreter.number import Number
+from basic_interpreter.number import Number, Value
 from basic_interpreter.parser_utils.nodes import NumberNode, BinaryOperationNode, UnaryOperationNode
 from basic_interpreter.tokens import token_types
 from basic_interpreter.errors import RunTimeError
@@ -25,6 +25,62 @@ class RTResult:
         self.error = error
         return self
 
+class Function(Value):
+    def __init__(self, name, body_node, arg_names):
+        super().__init__()
+        self.name = name or 'anonymous'
+        self.body_node = body_node
+        self.arg_names = arg_names
+    
+    def __repr__(self):
+        return f"<function {self.name}>"
+    
+    def set_context(self, context=None):
+        self.context = context
+        return self
+    
+    def set_position(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def execute(self, args):
+        res = RTResult()
+        interpreter = Interpreter()
+        new_context = Context(self.name, self.context, self.pos_start)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+
+        if len(args) > len(self.arg_names):
+            return res.failure(RunTimeError(
+                self.pos_start,
+                self.pos_end, 
+                f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
+                self.context
+            ))
+        
+        if len(args) < len(self.arg_names):
+            return res.failure(RunTimeError(
+                self.pos_start,
+                self.pos_end, 
+                f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
+                self.context
+            ))
+        for i, arg_val in enumerate(args):
+             arg_name = self.arg_names[i]
+             arg_val.set_context(new_context)
+             new_context.symbol_table.set(arg_name, arg_val)
+        value = res.register(interpreter.visit(self.body_node, new_context))
+        if res.error:
+            return res
+        return res.success(value)
+    
+    def copy(self):
+        copy = Function(self.name, self.body_node, self.arg_names)
+        copy.set_context(self.context)
+        copy.set_position(self.pos_start, self.pos_end)
+        return copy
+
+
 
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):
@@ -36,9 +92,9 @@ class Context:
 
 
 class SymbolTable:
-    def __init__(self):
+    def __init__(self, parent=None):
         self.symbols = {}
-        self.parent = None
+        self.parent = parent
     
     def get(self, name):
         value = self.symbols.get(name, None)
@@ -201,3 +257,29 @@ class Interpreter:
             if res.error:
                 return res
         return res.success(None)
+    
+    def visit_FuncDefNode(self, node, context):
+        res = RTResult()
+        func_name = node.var_name_token.value if node.var_name_token else None
+        body_node = node.body_node
+        arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
+        func_value = Function(func_name, body_node, arg_names).set_context(context).set_position(node.pos_start, node.pos_end)
+        if node.var_name_token:
+            context.symbol_table.set(func_name, func_value)
+        return res.success(func_value)
+    
+    def visit_CallNode(self, node, context):
+        res = RTResult()
+        args = []
+
+        value_to_call = res.register(self.visit(node.node_to_call, context))
+        if res.error:
+            return res
+        for arg_node in node.arg_nodes:
+            args.append(res.register(self.visit(arg_node, context)))
+            if res.error:
+                return res
+        return_value = res.register(value_to_call.execute(args))
+        if res.error:
+            return res
+        return res.success(return_value)

@@ -128,7 +128,6 @@ class Parser:
                 "Expected identifier"
             ))
         var_name = self.current_token
-        print(f"var_name: {var_name}")
         res.register_advancement()
         self.advance()
         if self.current_token.type != token_types['=']:
@@ -198,7 +197,7 @@ class Parser:
             return res
         return res.success(nodes.WhileNode(condition, body))
 
-    def func_def(self):
+    def func_def(self):        
         res = ParseResult()
         if not self.current_token.matches(token_types['keyword'], 'FUN'):
             return  res.failure(InvalidSyntaxError(
@@ -248,19 +247,56 @@ class Parser:
         res.register_advancement()
         self.advance()
 
-        if self.current_token != token_types['->']:
+        if self.current_token.type != token_types['->']:
             return res.failure(InvalidSyntaxError(
                 self.current_token.pos_start, self.current_token.pos_end,
                 f"Expected '->'"
             ))
         
         res.register_advancement()
+        self.advance()
         body_node = res.register(self.expr())
         if res.error:
             return res
         return res.success(nodes.FuncDefNode(
             var_name_token, arg_name_tokens, body_node
-        ))        
+        ))
+
+    def call(self):
+        res = ParseResult()
+        atom = res.register(self.atom())
+        if res.error:
+            return res
+        
+        if self.current_token.type == token_types['(']:
+            res.register_advancement()
+            self.advance()
+            arg_nodes = []
+            if self.current_token == token_types[')']:
+                res.register_advancement()
+                self.advance()
+            else:
+                arg_nodes.append(res.register(self.expr()))
+                if res.error:
+                    return res
+                while self.current_token.type == token_types[',']:
+                    res.register_advancement()
+                    self.advance()
+
+                    arg_nodes.append(res.register(self.expr()))
+                    if res.error:
+                        return res
+                if self.current_token.type != token_types[')']:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_token.pos_start, self.current_token.pos_end,
+                        f"Expected ',' or ')'"
+                    ))
+                res.register_advancement()
+                self.advance()
+            
+            return res.success(nodes.CallNode(atom, arg_nodes))
+         # The atom is not called but instead just returned as no () was found after the atom   
+        return res.success(atom)
 
     def atom(self):
         res = ParseResult()
@@ -315,7 +351,8 @@ class Parser:
         ))
     
     def power(self):
-        return self.bin_op(self.atom, [token_types['^']], self.factor)
+        return self.bin_op(self.call, [token_types['^']], self.factor)
+
 
     def factor(self):
         res = ParseResult()

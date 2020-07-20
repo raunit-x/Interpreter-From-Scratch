@@ -85,9 +85,6 @@ class FuncDefNode:
             self.pos_start = self.body_node.pos_start
         self.pos_end = self.body_node.pos_end
 
-    def __repr__(self):
-        return f"<Function {self.var_name_token if self.var_name_token else 'Anonymous'}>"
-
 
 class CallNode:
     def __init__(self, node_to_call, arg_nodes):
