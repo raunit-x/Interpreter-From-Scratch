@@ -24,7 +24,7 @@ def run(fn, text):
     print(f'AST: {ast.node}')
     if ast.error:
         return None, ast.error
-    
+        
     # Run Program
     interpreter = Interpreter()
     context = Context(fn)
