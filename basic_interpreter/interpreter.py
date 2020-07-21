@@ -8,22 +8,23 @@ class RTResult:
     def __init__(self):
         self.value = None
         self.error = None
-    
+
     def __repr__(self):
         return f'{self.value}'
- 
+
     def register(self, res):
         if res.error:
             self.error = res.error
         return res.value
-    
+
     def success(self, value):
         self.value = value
         return self
-    
+
     def failure(self, error):
         self.error = error
         return self
+
 
 class Function(Value):
     def __init__(self, name, body_node, arg_names):
@@ -31,14 +32,14 @@ class Function(Value):
         self.name = name or 'anonymous'
         self.body_node = body_node
         self.arg_names = arg_names
-    
+
     def __repr__(self):
         return f"<function {self.name}>"
-    
+
     def set_context(self, context=None):
         self.context = context
         return self
-    
+
     def set_position(self, pos_start=None, pos_end=None):
         self.pos_start = pos_start
         self.pos_end = pos_end
@@ -53,61 +54,61 @@ class Function(Value):
         if len(args) > len(self.arg_names):
             return res.failure(RunTimeError(
                 self.pos_start,
-                self.pos_end, 
+                self.pos_end,
                 f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
                 self.context
             ))
-        
+
         if len(args) < len(self.arg_names):
             return res.failure(RunTimeError(
                 self.pos_start,
-                self.pos_end, 
+                self.pos_end,
                 f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
                 self.context
             ))
         for i, arg_val in enumerate(args):
-             arg_name = self.arg_names[i]
-             arg_val.set_context(new_context)
-             new_context.symbol_table.set(arg_name, arg_val)
+            arg_name = self.arg_names[i]
+            arg_val.set_context(new_context)
+            new_context.symbol_table.set(arg_name, arg_val)
         value = res.register(interpreter.visit(self.body_node, new_context))
         if res.error:
             return res
         return res.success(value)
-    
+
     def copy(self):
         copy = Function(self.name, self.body_node, self.arg_names)
         copy.set_context(self.context)
         copy.set_position(self.pos_start, self.pos_end)
-        return copy 
+        return copy
 
 
 class String(Value):
     def __init__(self, value):
         super().__init__()
         self.value = value
-    
+
     def set_context(self, context=None):
         self.context = context
         return self
-    
+
     def set_position(self, pos_start=None, pos_end=None):
         self.pos_start = pos_start
         self.pos_end = pos_end
         return self
-    
+
     def added_to(self, other):
         if isinstance(other, String):
             return String(self.value + other.value).set_context(self.context), None
-        return None, Value.illegal_operation(self, other)        
+        return None, Value.illegal_operation(self, other)
 
     def multiplied_by(self, other):
         if isinstance(other, Number):
             return String(self.value * other.value).set_context(self.context), None
         return None, Value.illegal_operation(self, other)
-    
+
     def is_true(self):
         return len(self.value)
-    
+
     def copy(self):
         copy = String(self.value)
         copy.set_position(self.pos_start, self.pos_end)
@@ -118,6 +119,68 @@ class String(Value):
         return f"'{self.value}'"
 
 
+class List(Value):
+    def __init__(self, elements):
+        super().__init__()
+        self.elements = elements
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def set_position(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def added_to(self, other):
+        if isinstance(other, Number):
+            self.elements.append(other.value)
+            return List(self.elements), None
+        return None, Value.illegal_operation(self, other)
+
+    def subtracted_by(self, other):
+        if isinstance(other, Number):
+            new_list = self.copy()
+            try:
+                new_list.elements.pop(other.value)
+                return List(new_list), None
+            except Exception as e:
+                return None, RunTimeError(
+                    self.pos_start, self.pos_end,
+                    f'Invalid index {other.value}', 
+                    self.context
+                )
+        return None, Value.illegal_operation(self, other)
+
+    def multiplied_by(self, other):
+        if isinstance(other, List):
+            new_list = self.copy()
+            new_list += other.elements
+            return List(new_list), None
+        return None, Value.illegal_operation(self, other)
+
+    def divided_by(self, other):
+        if isinstance(other, Number):
+            try:
+                return self.elements[other.value], None
+            except Exception as e:
+                return None, RunTimeError(
+                        self.pos_start, self.pos_end,
+                        f'Invalid index {other.value}', 
+                        self.context
+                    )
+            return None, Value.illegal_operation(self, other)
+
+    def copy(self):
+        copy = List(self.elements)
+        copy.set_position(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+
+    def __repr__(self):
+        return f'[{",".join([str(x) for x in self.elements])}]'
+
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):
         self.display_name = display_name
@@ -126,21 +189,20 @@ class Context:
         self.symbol_table = None
 
 
-
 class SymbolTable:
     def __init__(self, parent=None):
         self.symbols = {}
         self.parent = parent
-    
+
     def get(self, name):
         value = self.symbols.get(name, None)
         if not value and self.parent:
             return self.parent.get(name)
         return value
-    
+
     def set(self, name, value):
         self.symbols[name] = value
-    
+
     def remove(self, name):
         del self.symbols[name]
 
@@ -150,14 +212,15 @@ class Interpreter:
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
-    
+
     def no_visit_method(self, node, context) -> Number:
         raise Exception(f'No visit_{type(node).__name__} method defined')
-    
+
     def visit_NumberNode(self, node: NumberNode, context) -> Number:
         return RTResult().success(
-            Number(node.token.value).set_context(context).set_position(node.pos_start, node.pos_start)
-        ) 
+            Number(node.token.value).set_context(
+                context).set_position(node.pos_start, node.pos_start)
+        )
 
     def visit_BinaryOperationNode(self, node: BinaryOperationNode, context) -> Number:
         res = RTResult()
@@ -197,9 +260,9 @@ class Interpreter:
             return res.failure(error)
         return res.success(result.set_position(node.pos_start, node.pos_end))
 
-    
-    def visit_UnaryOperationNode(self, node, context) -> Number: 
-        res = RTResult()        
+
+    def visit_UnaryOperationNode(self, node, context) -> Number:
+        res = RTResult()
         num = res.register(self.visit(node.node, context))
         if res.error:
             return res
@@ -209,9 +272,9 @@ class Interpreter:
         elif node.operator_token.matches(token_types['keyword'], "NOT"):
             num, error = num.notted()
         if error:
-            return res.failure(error) 
+            return res.failure(error)
         return res.success(num.set_position(node.pos_start, node.pos_end))
-    
+
     def visit_VarAccessNode(self, node, context):
         res = RTResult()
         var_name = node.var_name_token.value
@@ -219,12 +282,12 @@ class Interpreter:
 
         if not value:
             return res.failure(
-                RunTimeError(node.pos_start, node.pos_start, 
-                f"'{var_name}' is not defined",
-                context
-            ))
+                RunTimeError(node.pos_start, node.pos_start,
+                             f"'{var_name}' is not defined",
+                             context
+                             ))
         return res.success(value)
-    
+
     def visit_VarAssignNode(self, node, context):
         res = RTResult()
         var_name = node.var_name_token.value
@@ -233,7 +296,7 @@ class Interpreter:
             return res
         context.symbol_table.set(var_name, value)
         return res.success(value)
-    
+
     def visit_IFNode(self, node, context):
         res = RTResult()
 
@@ -252,7 +315,7 @@ class Interpreter:
                 return res
             return res.success(else_value)
         return res.success(None)
-    
+
     def visit_ForNode(self, node, context):
         res = RTResult()
         start_value = res.register(self.visit(node.start_value_node, context))
@@ -263,16 +326,17 @@ class Interpreter:
             return res
         step_value = Number(1)
         if node.step_value_node:
-            step_value = res.register(self.visit(node.step_value_node, context))
+            step_value = res.register(
+                self.visit(node.step_value_node, context))
             if res.error:
                 return res
         i = start_value.value
 
         if step_value.value >= 0:
-            condition = lambda: i < end_value.value
+            def condition(): return i < end_value.value
         else:
-            condition = lambda: i > end_value.value
-        
+            def condition(): return i > end_value.value
+
         while condition():
             context.symbol_table.set(node.var_name_token.value, Number(i))
             i += step_value.value
@@ -293,17 +357,18 @@ class Interpreter:
             if res.error:
                 return res
         return res.success(None)
-    
+
     def visit_FuncDefNode(self, node, context):
         res = RTResult()
         func_name = node.var_name_token.value if node.var_name_token else None
         body_node = node.body_node
         arg_names = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names).set_context(context).set_position(node.pos_start, node.pos_end)
+        func_value = Function(func_name, body_node, arg_names).set_context(
+            context).set_position(node.pos_start, node.pos_end)
         if node.var_name_token:
             context.symbol_table.set(func_name, func_value)
         return res.success(func_value)
-    
+
     def visit_CallNode(self, node, context):
         res = RTResult()
         args = []
@@ -323,3 +388,15 @@ class Interpreter:
     def visit_StringNode(self, node, context):
         res = RTResult()
         return res.success(String(node.token.value).set_context(context).set_position(node.pos_start, node.pos_end))
+    
+    def visit_ListNode(self, node, context):
+        res = RTResult()
+        elements = []
+        for element_node in node.element_nodes:
+            elements.append(res.register(self.visit(element_node, context)))
+            if res.error:
+                return res
+        return res.success(
+            List(elements).set_context(context).set_position(node.pos_start, node.pos_end)
+        )
+

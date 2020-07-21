@@ -101,4 +101,9 @@ class CallNode:
         self.arg_nodes = arg_nodes
         self.pos_start = self.node_to_call.pos_start
         self.pos_end = self.node_to_call.pos_end if not len(self.arg_nodes) else self.arg_nodes[-1].pos_end
-        
+
+class ListNode:
+    def __init__(self, element_nodes, pos_start, pos_end):
+        self.element_nodes = element_nodes
+        self.pos_start = pos_start
+        self.pos_end = pos_end
