@@ -88,7 +88,7 @@ class Lexer:
 
     
 
-    def make_string(self):
+    def make_string(self, quote):
         string = ''
         pos_start = self.pos.copy()
         escape_character = False
@@ -97,7 +97,7 @@ class Lexer:
             'n': '\n',
             't': '\t'
         }
-        while self.current_char and (self.current_char != '"' or escape_character):
+        while self.current_char and (self.current_char != quote or escape_character):
             if escape_character:
                 string += escape_characters.get(self.current_char, self.current_char)
                 escape_character = False
@@ -135,8 +135,8 @@ class Lexer:
                 tokens.append(self.make_number())
             elif self.current_char in LETTERS:
                 tokens.append(self.make_identifier())
-            elif self.current_char == '"':
-                tokens.append(self.make_string())
+            elif self.current_char == '"' or self.current_char == "'":
+                tokens.append(self.make_string(self.current_char))
             else:
                 pos_start = self.pos.copy()
                 char = self.current_char

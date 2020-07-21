@@ -115,7 +115,7 @@ class String(Value):
         return copy
 
     def __repr__(self):
-        return f'"{self.value}"'
+        return f"'{self.value}'"
 
 
 class Context:
