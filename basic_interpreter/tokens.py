@@ -20,6 +20,7 @@ token_types = {
     'EOF': 'EOF',
     ',': 'COMMA',
     '->': 'ARROW',
+    'TT_STRING': 'STRING'
 }
 
 class Token:

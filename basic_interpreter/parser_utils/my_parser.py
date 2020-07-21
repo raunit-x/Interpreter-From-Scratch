@@ -306,11 +306,18 @@ class Parser:
             res.register_advancement()
             self.advance()
             return res.success(nodes.NumberNode(tok))
-        elif tok.type == token_types['identifier']:
+
+        if tok.type == token_types['identifier']:
             res.register_advancement()
             self.advance()
             return res.success(nodes.VarAccessNode(tok))
-        elif tok.type == token_types['(']:
+        
+        if tok.type == token_types['TT_STRING']:
+            res.register_advancement()
+            self.advance()
+            return res.success(nodes.StringNode(tok))
+
+        if tok.type == token_types['(']:
             res.register_advancement()
             self.advance()
             expr = res.register(self.expr())

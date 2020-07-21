@@ -81,6 +81,42 @@ class Function(Value):
         return copy
 
 
+class String(Value):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
+    
+    def set_context(self, context=None):
+        self.context = context
+        return self
+    
+    def set_position(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+    
+    def added_to(self, other):
+        if isinstance(other, String):
+            return String(self.value + other.value).set_context(self.context), None
+        return None, Value.illegal_operation(self, other)        
+
+    def multiplied_by(self, other):
+        if isinstance(other, Number):
+            return String(self.value * other.value).set_context(self.context), None
+        return None, Value.illegal_operation(self, other)
+    
+    def is_true(self):
+        return len(self.value)
+    
+    def copy(self):
+        copy = String(self.value)
+        copy.set_position(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+
+    def __repr__(self):
+        return f'"{self.value}"'
+
 
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):
@@ -283,3 +319,7 @@ class Interpreter:
         if res.error:
             return res
         return res.success(return_value)
+
+    def visit_StringNode(self, node, context):
+        res = RTResult()
+        return res.success(String(node.token.value).set_context(context).set_position(node.pos_start, node.pos_end))
