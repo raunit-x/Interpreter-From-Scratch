@@ -26,10 +26,62 @@ class RTResult:
         return self
 
 
-class Function(Value):
+class BaseFunction(Value):
+    def __init__(self, name):
+        super().__init__()
+        self.name = name or '<anonymous>'
+    
+    def set_position(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+    
+    def set_context(self, context=None):
+        self.context = context
+        return self
+    
+    def generate_new_context(self):
+        new_context = Context(self.name, self.context, self.pos_start)
+        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        return new_context
+    
+    def check_args(self, arg_names, args):
+        res = RTResult()
+        if len(args) > len(arg_names):
+            return res.failure(RunTimeError(
+                self.pos_start,
+                self.pos_end,
+                f"{len(args) - len(arg_names)} too many args passed into '{self.name}'",
+                self.context
+            ))
+
+        if len(args) < len(arg_names):
+            return res.failure(RunTimeError(
+                self.pos_start,
+                self.pos_end,
+                f"{len(arg_names) - len(args)} too few args passed into '{self.name}'",
+                self.context
+            ))
+        return res.success(None)
+    
+    def populate_args(self, arg_names, args, exec_ctx):
+        for i, arg_val in enumerate(args):
+            arg_name = arg_names[i]
+            arg_val.set_context(exec_ctx)
+            exec_ctx.symbol_table.set(arg_name, arg_val)
+        
+    def check_and_populate_args(self, arg_names, args, exec_ctx):
+        res = RTResult()
+        res.register(self.check_args(arg_names, args))
+        if res.error:
+            return res
+        res.register(self.populate_args(arg_names, args, exec_ctx))
+        return res.success(None)
+
+
+class Function(BaseFunction):
     def __init__(self, name, body_node, arg_names):
         super().__init__()
-        self.name = name or 'anonymous'
         self.body_node = body_node
         self.arg_names = arg_names
 
@@ -48,28 +100,11 @@ class Function(Value):
     def execute(self, args):
         res = RTResult()
         interpreter = Interpreter()
-        new_context = Context(self.name, self.context, self.pos_start)
-        new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        new_context = self.generate_new_context()
 
-        if len(args) > len(self.arg_names):
-            return res.failure(RunTimeError(
-                self.pos_start,
-                self.pos_end,
-                f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
-                self.context
-            ))
-
-        if len(args) < len(self.arg_names):
-            return res.failure(RunTimeError(
-                self.pos_start,
-                self.pos_end,
-                f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
-                self.context
-            ))
-        for i, arg_val in enumerate(args):
-            arg_name = self.arg_names[i]
-            arg_val.set_context(new_context)
-            new_context.symbol_table.set(arg_name, arg_val)
+        res.register(self.check_and_populate_args(self.arg_names, args, new_context))
+        if res.error:
+            return res 
         value = res.register(interpreter.visit(self.body_node, new_context))
         if res.error:
             return res
@@ -81,6 +116,37 @@ class Function(Value):
         copy.set_position(self.pos_start, self.pos_end)
         return copy
 
+ 
+class BuiltInFunction(BaseFunction): 
+    def __init__(self, name):
+        super().__init__(name)
+
+    def execute(self, args):
+        res = RTResult()
+        new_context = self.generate_new_context()
+        method_name = f'exectute_{self.name}'
+        method = getattr(self, method_name, self.no_visit_method)
+        res.register(self.check_and_populate_args(method.arg_names, args, new_context))
+        if res.error:
+            return res
+
+        return_value = res.register(method(new_context))
+        if res.error:
+            return res
+        return res.success(return_value)
+    
+    def copy(self):
+        copy = BuiltInFunction(self.name)
+        copy.set_context(self.context)
+        copy.set_position(self.position)
+        return self
+    
+    def __repr__(self):
+        return f"<built-in function {self.name}>"
+    
+    def exectue_print(self, context):
+        print('')
+    execute_print.arg_names = ["value"]
 
 class String(Value):
     def __init__(self, value):

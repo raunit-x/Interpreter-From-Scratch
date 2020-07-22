@@ -196,3 +196,7 @@ class Number(Value):
     
     def is_true(self):
         return self.value
+
+Number.null = Number(0)
+Number.false = Number(0)
+Number.true = Number(1)
