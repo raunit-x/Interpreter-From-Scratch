@@ -15,13 +15,13 @@ def run(fn, text):
     # Generate Tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    # print(f'Tokens: {tokens}')
+    print(f'Tokens: {tokens}')
     if error:
         return None, error
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse() 
-    # print(f'AST: {ast.node}')
+    print(f'AST: {ast.node}')
     if ast.error:
         return None, ast.error
         
