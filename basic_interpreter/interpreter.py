@@ -144,9 +144,6 @@ class BuiltInFunction(BaseFunction):
     def __repr__(self):
         return f"<built-in function {self.name}>"
     
-    def exectue_print(self, context):
-        print('')
-    execute_print.arg_names = ["value"]
 
 class String(Value):
     def __init__(self, value):
