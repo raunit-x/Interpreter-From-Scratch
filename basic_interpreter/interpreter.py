@@ -81,7 +81,7 @@ class BaseFunction(Value):
 
 class Function(BaseFunction):
     def __init__(self, name, body_node, arg_names):
-        super().__init__()
+        super().__init__(name)
         self.body_node = body_node
         self.arg_names = arg_names
 
@@ -207,7 +207,7 @@ class List(Value):
             new_list = self.copy()
             try:
                 new_list.elements.pop(other.value)
-                return List(new_list), None
+                return List(new_list.elements), None
             except Exception as e:
                 return None, RunTimeError(
                     self.pos_start, self.pos_end,
@@ -242,6 +242,7 @@ class List(Value):
         return copy
 
     def __repr__(self):
+        # print(self.elements)
         return f'[{",".join([str(x) for x in self.elements])}]'
 
 class Context:
