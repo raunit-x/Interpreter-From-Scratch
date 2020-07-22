@@ -22,15 +22,15 @@
 <h3> Features </h3>
 <ul>
   <h4>1. Math Operations (Add, subtract, multiply, divide, exponentiation) with both <code>int</code> and <code>float</code> types</h4>
-  <img src='images/Screenshot 2020-07-22 at 1.34.19 PM.png' width='600' />
+  <img src='images/Screenshot 2020-07-22 at 1.34.19 PM.png' width='800' />
   <h4>2. Support for variable assignments of <code>int</code>, <code>float</code>, <code>string</code>, <code>list</code> and even <code>functions</code></h4>
-  <img src='images/Screenshot 2020-07-22 at 1.39.19 PM.png' width='600' />
+  <img src='images/Screenshot 2020-07-22 at 1.39.19 PM.png' width='800' />
   <h4> 3. Support for string operations </h4>
   <ol>
     <li>Supports <code>string</code> concatenation</li>
     <li>Supports repeating the <code>string</code></li>
   </ol>
-   <img src='images/Screenshot 2020-07-22 at 1.43.05 PM.png' width='600' />
+   <img src='images/Screenshot 2020-07-22 at 1.43.05 PM.png' width='800' />
   <h4> 4. Support for <code>List</code> operations and the list is generic and supports nesting! </h4>
   <ol>
     <li>Supports negative <code>indexing</code></li>
@@ -38,19 +38,19 @@
     <li>Supports <code>extending</code> the <code>list</code> with another <code>list</code></li>
     <li>Supports <code>popping</code> the <code>list</code> with valid <code>indexes</code></li>
   </ol>
-   <img src='images/Screenshot 2020-07-22 at 1.48.17 PM.png' width='600' />
+   <img src='images/Screenshot 2020-07-22 at 1.48.17 PM.png' width='800' />
   <h5> 5. Support for Conditional statements </h5>
   <ol>
     <li>Supports <code>IF</code>, <code>ELIF</code> and <code>ELSE</code></li>
     <li>Nesting upto any level</li>
     <li>Can even assign variables the <code>expr</code> of the <code>if-else</code> ladder like a <code>terenary operation</code></li>
   </ol>
-   <img src='images/Screenshot 2020-07-22 at 1.57.01 PM.png' width='600' />
+   <img src='images/Screenshot 2020-07-22 at 1.57.01 PM.png' width='800' />
   <h5> 5. Support for Loops </h5>
   <ol>
     <li><code>FOR</code> and <code>WHILE</code> loops are supported</li>
     <li>Can set the step of the iterable in the <code>FOR</code> loop</li>
     <li> Can store the result of the loops in a <code>list</code> </li>
   </ol>
-   <img src='images/Screenshot 2020-07-22 at 2.06.09 PM.png' width='600' />
+   <img src='images/Screenshot 2020-07-22 at 2.06.09 PM.png' width='800' />
 </ul> 
